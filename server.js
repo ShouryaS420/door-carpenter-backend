@@ -10,8 +10,39 @@ config({
   path: "./config/config.env",
 });
 
-connectDatabase();
+console.log(process.env.MONGO_URI);
 
-app.listen(process.env.PORT, () => {
-  console.log("Server is running on port " + process.env.PORT);
-});
+
+// connectDatabase();
+
+// app.listen(process.env.PORT, () => {
+//   console.log("Server is running on port " + process.env.PORT);
+// });
+const PORT = process.env.PORT || 4000;
+
+mongoose.set("strictQuery", false); // optional but good
+mongoose.set("bufferCommands", false); // prevent buffering
+
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 10000
+  })
+  .then(() => {
+    console.log("✅ MongoDB connected");
+
+    // ✅ SAFE: only now run cron jobs or background tasks
+    import("./cron/autoAssign.js").then(() => {
+      console.log("🧠 autoAssign cron loaded");
+    });
+
+    // only start server after connection is ready
+    app.listen(PORT, () =>
+      console.log(`🚀 Server running on port ${PORT}`)
+    );
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err.message);
+    process.exit(1);
+  });

@@ -14,3 +14,12 @@ export const verify = (req,res,next) => {
         res.status(401).json({ error: e });
     }
 }
+
+// middleware to enforce role
+export function requireRole(role){
+    return (req,res,next)=>{
+        if (req.user.role !== role)
+        return res.status(403).json({ error:"forbidden" });
+        next();
+    };
+}
